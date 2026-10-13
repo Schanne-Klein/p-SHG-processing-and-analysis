@@ -9,11 +9,11 @@ catch
 end
 
 
-path_computer = 'D:\Vaky\codes\Vaky 2026 codes processing matlab V2'; %MODIF
-addpath('D:\Vaky\codes\Vaky 2026 codes processing matlab V2\Sous-fonctions\CircStat2012a') %location of the sub-functions
+path_computer = 'D:\2_codes processing p-SHG matlab'; %MODIF
+addpath('D:\2_codes processing p-SHG matlab\Sous-fonctions\CircStat2012a') %location of the sub-functions
 
 % ImageJ loading
-path_ml = 'D:\Vaky\codes\Vaky 2026 codes processing matlab V2'; %MODIF
+path_ml = 'D:\2_codes processing p-SHG matlab'; %MODIF
 
 path_mij =fullfile(path_ml, 'mij.jar');
 path_ij =fullfile(path_ml, 'ij.jar');
@@ -50,7 +50,7 @@ elseif strcmp(objective,'20xZ_Air')
 end
 
 
-scale=strcat('distance=', sampling, ' known=', pix_obj, ' pixel=1 unit=µm'); % the scale that will be used for the images on imageJ
+scale=strcat('distance=', sampling, ' known=', pix_obj, ' pixel=1 unit=Âµm'); % the scale that will be used for the images on imageJ
 
 namePath=strcat('\','anal_r2', answer_anal{1});
 Path_Writing = fullfile(pathname2,namePath);
