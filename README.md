@@ -8,18 +8,23 @@ o	size to crop on each size (in pixels!): eg. If we set 210*200 pixels in the ac
 o	whether in the ‘XYZ’ mode or not
 o	Objective and sampling
 o	Whether saturation correction and the pixels rate (kHz)
+
 A subdirectory is created “data_satcorr” or “data_nosat” (depending on whether saturation was chosen or not).
 Images are cropped on each side based on the cropping chosen and the sampling .
+
 - Division of each image by 14
+  
 1- If no saturation correction: 
 - Conversion of the image to 8 bits (taking the normalization into account to have the right values!, could be removed if unnecessary)
 - Saving the images in the new directory with the right scale (depending on the pixel size ie objective, and the sampling)
+ 
 2- If saturation correction: 
 -	Application of the saturation correction (depending on the pixels rate entered and the laser pulse rate: 80 MHz)
 -	Conversion to 8 bits
 -	Saving of the images with the scaling
--	If ‘XYZ’, take the saved images and stack all them for each channel and save with the right scaling. Otherwise the images are just kept as they are since no need for stacking (XY) or need for processing first with the MALTAB code (XYPZ,XYP, mosaick XYPZ)
--	Remove all the original raw data.
+
+If ‘XYZ’, take the saved images and stack all them for each channel and save with the right scaling. Otherwise the images are just kept as they are since no need for stacking (XY) or need for processing first with the MALTAB code (XYPZ,XYP, mosaick XYPZ).
+Remove all the original raw data.
 
 ## 2- MATLAB code for p-SHG data processing
 The main code is “PSHG_FFT_ProcessAndSaving_Vaky2026.m”.  
