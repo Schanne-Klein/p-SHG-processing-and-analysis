@@ -57,7 +57,7 @@ o	7 maps are created:
 4- the intensity not binned (no filters) -> saved later *10, in 16 bits
 5-	the anisotropy parameter rho not-filtered with all values -> saved later *10000, in 16 bits
 6-	the rho filtered (pixels with R2>0.5 and 1<rho<3) -> saved later *10000, in 16 bits
-7-	R2 not filtered-> saved later *10000, in 16 bits
+7-	R2 not filtered-> saved later *10000, in 16 bits. 
 At the end, all of these maps are saved (for SHG, and only intensity maps for other modalities such as 2PEF) in a sub-directory.  
 
 ## 3- The mosaic reconstruction python code
