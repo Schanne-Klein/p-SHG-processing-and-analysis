@@ -1,0 +1,440 @@
+clc
+close all
+clear all
+% Récupération des images brutes 
+    % Demande de saisi à l utilisateur
+path=[uigetdir('C:\Users\Guillaume\Desktop\PostDoc\', 'Selectionner le dossier a traiter') '\'];
+list1=dir([path '\' '*.ch00' '*.tif']);    
+list2=dir([path '\' '*.ch01' '*.tif']);    
+list3=dir([path '\' '*.ch02' '*.tif']);    
+list4=dir([path '\' '*.ch03' '*.tif']);
+
+% % Type d'acquisition
+% choice = questdlg('What kind of images ?', ...
+% 	'File name format', ...
+% 	'XYP','XYPZ','XYPZ');
+% % Handle response
+% switch choice
+%     case 'XYP'
+%         XYP = 1;
+%     case 'XYPZ'
+%         XYP = 0;
+% end
+
+%Demande à l'utilisateur le nom du fichier de sortie, le nombre d'états de polarisation ainsi que les
+    %polarisations initiale et finale
+    prompt={'Entrer le nom de sortie des images (Par defaut: EOM)','Entrer le nombre d etats de polarisation (OSEF)','Décalage', 'Quel est l angle de la polarisation initial? (Par défaut : 0)', 'Quel est l angle de la polarisation final? (Par défaut : 150)'};
+       name='Info sur l acquisition';
+       numlines=1;
+       defaultanswer={'p1','18','0','0','170'};
+       answers=inputdlg(prompt,name,numlines,defaultanswer);
+       Nomsortie=char(answers(1));
+       NBetats=str2double(answers(2));
+       NBDecal=str2double(answers(3));
+        Angi=str2double(answers(4));
+        Angf=str2double(answers(5));
+       clearvars answers prompt defaultanswer numlines name 
+       % Création du dossier de sauvegarde
+    sub_path = [path Nomsortie]
+    mkdir(sub_path);
+    
+temp={};
+Namechannel=[];
+channel=1;
+% Création d'une variable contenant le nom de toutes les images
+if isempty(list1)==0
+    temp(channel,:)={list1.name};
+    Namechannel(channel)=0;
+    channel=channel+1;
+end
+if isempty(list2)==0
+    temp(channel,:)={list2.name};
+    Namechannel(channel)=1;
+    channel=channel+1;
+end
+if isempty(list3)==0
+    temp(channel,:)={list3.name};
+    Namechannel(channel)=2;
+    channel=channel+1;    
+end
+if isempty(list4)==0
+    temp(channel,:)={list4.name};
+    Namechannel(channel)=3;
+end
+
+nbimage=max([numel(list1),numel(list2),numel(list3),numel(list4)]);
+nbchannel=numel(Namechannel);
+
+sprintf('Il y a %d images pour chacun des %d channel', nbimage , nbchannel)
+ScanWindowParameters=40
+
+% Angt=0:1:1440;
+% Angle=Angt/max(Angt)*180;
+Angleint=0:0.5:180;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    channel=1
+    
+    for image=1:nbimage
+        image
+        name=char(temp(channel,image));
+        file=[path name];
+        CH00raw(:,:,image)=imread(file);
+%         pXY_savetemp(:,:,image)=filter2(ones(ScanWindowParameters),imageb(:,:),'valid');
+%         CH00(:,:,image)=pXY_savetemp(1:ScanWindowParameters:end,1:ScanWindowParameters:end,image)/ScanWindowParameters/ScanWindowParameters;
+%         clearvars  pXY_savetemp
+        
+        name2=char(temp(channel+1,image));
+        file2=[path name2];
+        CH01raw(:,:,image)=imread(file2);
+%         pXY_savetemp2(:,:,image)=filter2(ones(ScanWindowParameters),imageb2(:,:),'valid');
+%         CH01(:,:,image)=pXY_savetemp2(1:ScanWindowParameters:end,1:ScanWindowParameters:end,image)/ScanWindowParameters/ScanWindowParameters;
+%         clearvars  pXY_savetemp2
+        
+    end
+    
+    tic
+     for image=1:nbimage
+        image
+        pXY_savetemp(:,:,image)=filter2(ones(ScanWindowParameters),squeeze(CH00raw(:,:,image)),'valid');
+        CH00(:,:,image)=pXY_savetemp(1:ScanWindowParameters:end,1:ScanWindowParameters:end,image)/ScanWindowParameters/ScanWindowParameters;
+        clearvars  pXY_savetemp
+  
+        pXY_savetemp2(:,:,image)=filter2(ones(ScanWindowParameters),squeeze(CH01raw(:,:,image)),'valid');
+        CH01(:,:,image)=pXY_savetemp2(1:ScanWindowParameters:end,1:ScanWindowParameters:end,image)/ScanWindowParameters/ScanWindowParameters;
+        clearvars  pXY_savetemp2
+        
+     end
+     toc
+     
+%     meanmaxCH00=mean(mean(max(CH00,[],3)))+200;
+%     CH00filt=CH00;
+%     CH00filt(CH00filt>meanmaxCH00)=0;
+%     
+%         
+%     meanmaxCH01=mean(mean(max(CH01,[],3)))+200;
+%     CH01filt=CH01;
+%     CH01filt(CH01filt>meanmaxCH01)=0;
+    
+    [x,y,z]=size(CH00);
+    
+      tic      
+    for ii=1:x
+        ii
+     
+        for jj=1:y   
+%             temp2=squeeze(CH00(ii,jj,:));
+            
+%             CH00int(ii,jj,:) = interp1(Angle,temp2,Angleint,'spline');
+            Anglefit=squeeze(Angleint)';
+            CH00temp=squeeze(CH00(ii,jj,:));
+            CH00fit(ii,jj,:)=fit(Anglefit,CH00temp,'cubicinterp');
+            [value position]=max(CH00fit(ii,jj,:));
+            cartoanglemaxch00(ii,jj)=(position)/z*180;
+            cartoPowermaxch00(ii,jj)=(value)/14;
+
+% %             CH00int(ii,jj,:) = interp1(Angle,temp2,Angleint,'spline');
+%             [valuefilt positionfilt]=max(CH00filt(ii,jj,:));
+%             cartoanglemaxch00filt(ii,jj)=(positionfilt)/z*180;
+%             cartoPowermaxch00filt(ii,jj)=(valuefilt)/14;
+            
+%             temp2=squeeze(CH00(ii,jj,:));
+            
+%             CH00int(ii,jj,:) = interp1(Angle,temp2,Angleint,'spline');
+            CH01temp=squeeze(CH01(ii,jj,:));
+            CH01fit(ii,jj,:)=fit(Anglefit,CH01temp,'cubicinterp');
+            [value2 position2]=max(CH01fit(ii,jj,:));
+            cartoanglemaxch01(ii,jj)=(position2)/z*180;
+            cartoPowermaxch01(ii,jj)=(value2)/14;
+            
+% %             CH00int(ii,jj,:) = interp1(Angle,temp2,Angleint,'spline');
+%             [value2filt position2filt]=max(CH01filt(ii,jj,:));
+%             cartoanglemaxch01filt(ii,jj)=(position2filt)/z*180;
+%             cartoPowermaxch01filt(ii,jj)=(value2filt)/14;
+        end
+        end
+        toc
+   
+    cartoanglemaxch00UP=cartoanglemaxch00-180; %%phi_XY_diff>0
+    cartoanglemaxch00UP(cartoanglemaxch00<90)=0;
+    cartoanglemaxch00DOWN=cartoanglemaxch00; %%phi_XY_diff<0
+    cartoanglemaxch00DOWN(cartoanglemaxch00>90)=0;
+    cartoanglemaxch00res = cartoanglemaxch00UP+cartoanglemaxch00DOWN;
+    
+%    CH00filt 
+%     cartoanglemaxch00filtUP=cartoanglemaxch00filt-180; %%phi_XY_diff>0
+%     cartoanglemaxch00filtUP(cartoanglemaxch00filt<90)=0;
+%     cartoanglemaxch00filtDOWN=cartoanglemaxch00filt; %%phi_XY_diff<0
+%     cartoanglemaxch00filtDOWN(cartoanglemaxch00filt>90)=0;
+%     cartoanglemaxch00filtres = cartoanglemaxch00filtUP+cartoanglemaxch00filtDOWN;
+    
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+    h(1)=figure(1);
+%     sc(cartoanglemaxch00res,'hsv')
+    imagesc(cartoanglemaxch00res)
+    title(strcat('CartoAngleCH00'),'fontsize',18);
+    axis off;    
+    c=colorbar;
+    caxis([-90 90]);    
+    set(gca,'fontsize',18);
+    img=[sub_path 'CartoAngleCH00.tif'];
+    saveas(h(1),img);
+   
+    h(10)=figure(10);
+%     sc(cartoanglemaxch00res,'hsv')
+    imagesc(cartoanglemaxch00res)
+    title(strcat('CartoAngleCH00'),'fontsize',18);
+    axis off;    
+    c=colorbar;
+    minCH00=min(min(cartoanglemaxch00res));
+    maxCH00=max(max(cartoanglemaxch00res));
+    caxis([minCH00 maxCH00]);    
+    set(gca,'fontsize',18);
+    img=[sub_path 'CartoAngleCH00b.tif'];
+    saveas(h(10),img);
+        
+%     h(100)=figure(100);
+% %     sc(cartoanglemaxch00res,'hsv')
+%     imagesc(cartoanglemaxch00filtres)
+%     title(strcat('CartoAngleCH00Filtr'),'fontsize',18);
+%     axis off;    
+%     c=colorbar;
+%     caxis([-90 90]);    
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CartoAngleCH00Filtr.tif'];
+%     saveas(h(100),img);
+%     
+%     h(1000)=figure(1000);
+% %     sc(cartoanglemaxch00res,'hsv')
+%     imagesc(cartoanglemaxch00filtres)
+%     title(strcat('CartoAngleCH00Filtr'),'fontsize',18);
+%     axis off;    
+%     c=colorbar;
+%     minCH00=min(min(cartoanglemaxch00filtres));
+%     maxCH00=max(max(cartoanglemaxch00filtres));
+%     caxis([minCH00 maxCH00]);    
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CartoAngleCH00Filtb.tif'];
+%     saveas(h(1000),img);
+    
+    h(10000)=figure(10000);
+%     sc(cartoanglemaxch00res,'hsv')
+    imagesc(cartoPowermaxch00)
+    title(strcat('CartoPowerCH00'),'fontsize',18);
+    axis off;    
+    c=colorbar;
+    minCH00=min(min(cartoPowermaxch00));
+    maxCH00=max(max(cartoPowermaxch00));
+    caxis([minCH00 maxCH00]);    
+    set(gca,'fontsize',18);
+    img=[sub_path 'CartoPowerCH00b.tif'];
+    saveas(h(10000),img);
+    
+%     h(100000)=figure(100000);
+% %     sc(cartoanglemaxch00res,'hsv')
+%     imagesc(cartoPowermaxch00filt)
+%     title(strcat('CartoPowerCH00Filtr'),'fontsize',18);
+%     axis off;    
+%     c=colorbar;
+%     minCH00=min(min(cartoPowermaxch00filt));
+%     maxCH00=max(max(cartoPowermaxch00filt));
+%     caxis([minCH00 maxCH00]);
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CartoPowerCH00Filtrb.tif'];
+%     saveas(h(100000),img);
+    
+
+
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    cartoanglemaxch01UP=cartoanglemaxch01-180; %%phi_XY_diff>0
+    cartoanglemaxch01UP(cartoanglemaxch01<90)=0;
+    cartoanglemaxch01DOWN=cartoanglemaxch01; %%phi_XY_diff<0
+    cartoanglemaxch01DOWN(cartoanglemaxch01>90)=0;
+    cartoanglemaxch01res = cartoanglemaxch01UP+cartoanglemaxch01DOWN;
+    
+    %    CH00filt 
+%     cartoanglemaxch01filtUP=cartoanglemaxch01filt-180; %%phi_XY_diff>0
+%     cartoanglemaxch01filtUP(cartoanglemaxch01filt<90)=0;
+%     cartoanglemaxch01filtDOWN=cartoanglemaxch01filt; %%phi_XY_diff<0
+%     cartoanglemaxch01filtDOWN(cartoanglemaxch01filt>90)=0;
+%     cartoanglemaxch01filtres = cartoanglemaxch01filtUP+cartoanglemaxch01filtDOWN;
+    
+       h(1)=figure(1);
+%     sc(cartoanglemaxch01res,'hsv')
+    imagesc(cartoanglemaxch01res)
+    title(strcat('CartoAngleCH01'),'fontsize',18);
+    axis off;    
+    c=colorbar;
+    caxis([-90 90]);    
+    set(gca,'fontsize',18);
+    img=[sub_path 'CartoAngleCH01.tif'];
+    saveas(h(1),img);
+   
+    h(10)=figure(10);
+%     sc(cartoanglemaxch01res,'hsv')
+    imagesc(cartoanglemaxch01res)
+    title(strcat('CartoAngleCH01'),'fontsize',18);
+    axis off;    
+    c=colorbar;
+    minCH01=min(min(cartoanglemaxch01res));
+    maxCH01=max(max(cartoanglemaxch01res));
+    caxis([minCH01 maxCH01]);    
+    set(gca,'fontsize',18);
+    img=[sub_path 'CartoAngleCH01b.tif'];
+    saveas(h(10),img);
+        
+%     h(101)=figure(101);
+% %     sc(cartoanglemaxch01res,'hsv')
+%     imagesc(cartoanglemaxch01filtres)
+%     title(strcat('CartoAngleCH01Filtr'),'fontsize',18);
+%     axis off;    
+%     c=colorbar;
+%     caxis([-90 90]);    
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CartoAngleCH01Filtr.tif'];
+%     saveas(h(101),img);
+%     
+%     h(1010)=figure(1010);
+% %     sc(cartoanglemaxch01res,'hsv')
+%     imagesc(cartoanglemaxch01filtres)
+%     title(strcat('CartoAngleCH01Filtr'),'fontsize',18);
+%     axis off;    
+%     c=colorbar;
+%     minCH01=min(min(cartoanglemaxch01filtres));
+%     maxCH01=max(max(cartoanglemaxch01filtres));
+%     caxis([minCH01 maxCH01]);    
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CartoAngleCH01Filtb.tif'];
+%     saveas(h(1010),img);
+    
+    h(10101)=figure(10101);
+%     sc(cartoanglemaxch01res,'hsv')
+    imagesc(cartoPowermaxch01)
+    title(strcat('CartoPowerCH01'),'fontsize',18);
+    axis off;    
+    c=colorbar;
+    minCH01=min(min(cartoPowermaxch01));
+    maxCH01=max(max(cartoPowermaxch01));
+    caxis([minCH01 maxCH01]);    
+    set(gca,'fontsize',18);
+    img=[sub_path 'CartoPowerCH01b.tif'];
+    saveas(h(10101),img);
+%     
+%     h(101010)=figure(101010);
+% %     sc(cartoanglemaxch01res,'hsv')
+%     imagesc(cartoPowermaxch01filt)
+%     title(strcat('CartoPowerCH01Filtr'),'fontsize',18);
+%     axis off;    
+%     c=colorbar;
+%     minCH01=min(min(cartoPowermaxch01filt));
+%     maxCH01=max(max(cartoPowermaxch01filt));
+%     caxis([minCH01 maxCH01]);
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CartoPowerCH01Filtrb.tif'];
+%     saveas(h(101010),img);
+    
+    
+    
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%         channel=2
+%     for image=1:nbimage
+%         name=char(temp(channel,image));
+%         file=[path name];
+%         imageb=imread(file);
+%         pXY_savetemp(:,:,image)=filter2(ones(ScanWindowParameters),imageb(:,:),'valid');
+%         CH01(:,:,image)=pXY_savetemp(1:ScanWindowParameters:end,1:ScanWindowParameters:end,image)/ScanWindowParameters/ScanWindowParameters;
+%         clearvars  pXY_savetemp  
+%     end
+%     
+%     [x,y,z]=size(CH01);
+%    
+%     for ii=1:x
+%         for jj=1:y
+%             [value position]=max(CH01(ii,jj,:));
+%             cartoanglemaxch01(ii,jj)=(position-1)*10;
+%         end
+%     end
+%     
+%     h(2)=figure(2);
+%     sc(cartoanglemaxch01,'hsv')
+%     title(strcat('CH01'),'fontsize',18);
+%     axis off;   
+%     c=colorbar;
+%     caxis([0 180]);    
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CH01.tif'];
+%     saveas(h(2),img);
+%     
+%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%         channel=3
+%     for image=1:nbimage
+%         name=char(temp(channel,image));
+%         file=[path name];
+%         imageb=imread(file);
+%         pXY_savetemp(:,:,image)=filter2(ones(ScanWindowParameters),imageb(:,:),'valid');
+%         CH02(:,:,image)=pXY_savetemp(1:ScanWindowParameters:end,1:ScanWindowParameters:end,image)/ScanWindowParameters/ScanWindowParameters;
+%         clearvars  pXY_savetemp  
+%     end
+%     
+%     [x,y,z]=size(CH02);
+%    
+%     for ii=1:x
+%         for jj=1:y
+%             [value position]=max(CH02(ii,jj,:));
+%             cartoanglemaxch02(ii,jj)=(position-1)*10;
+%         end
+%     end
+%     
+%     h(3)=figure(3);
+%     sc(cartoanglemaxch02,'hsv')
+%     title(strcat('CH02'),'fontsize',18);
+%     axis off; 
+%     c=colorbar;
+%     caxis([0 180]);    
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CH02.tif'];
+%     saveas(h(3),img);
+%     
+%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%         channel=4
+%     for image=1:nbimage
+%         name=char(temp(channel,image));
+%         file=[path name];
+%         imageb=imread(file);
+%         pXY_savetemp(:,:,image)=filter2(ones(ScanWindowParameters),imageb(:,:),'valid');
+%         CH03(:,:,image)=pXY_savetemp(1:ScanWindowParameters:end,1:ScanWindowParameters:end,image)/ScanWindowParameters/ScanWindowParameters;
+%         clearvars  pXY_savetemp  
+%     end
+%     
+%     [x,y,z]=size(CH03);
+%    
+%     for ii=1:x
+%         for jj=1:y
+%             [value position]=max(CH03(ii,jj,:));
+%             cartoanglemaxch03(ii,jj)=(position-1)*10;
+%         end
+%     end
+%     
+%     h(4)=figure(4);
+%     sc(cartoanglemaxch03,'hsv')
+%     title(strcat('CH03'),'fontsize',18);
+%     axis off; 
+%     c=colorbar;
+%     caxis([0 180]);    
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CH03.tif'];
+%     saveas(h(1),img);
+%     
+%     h(40)=figure(40);
+%     sc(cartoanglemaxch00res,'hsv')
+%     title(strcat('CH03'),'fontsize',18);
+%     axis off;    
+%     c=colorbar;
+%     minCH03=min(min(cartoanglemaxch03));
+%     maxCH03=max(max(cartoanglemaxch03));
+%     caxis([minCH03 maxCH03]);    
+%     set(gca,'fontsize',18);
+%     img=[sub_path 'CH03b.tif'];
+%     saveas(h(1),img);
