@@ -1,14 +1,13 @@
-%Written by Clothilde 2021-11-18
+%Written by Vaky 2026-01-27
 
 clearvars;
 close all;
 clc;
 %% path for the sub-functions
-path_computer = 'D:\Vaky\codes\Vaky 2026 codes processing matlab V2'; %path where the sous-fonctions are
+path_computer = 'D:\2_codes processing p-SHG matlab'; % TO CHANGE: path where the sub-fonctions are, ie where the folder with the codes is
 addpath(fullfile(path_computer, 'Sous-fonctions'));
 
-path_dflt_uigetdir = 'D:\Vaky\D14_and_PTB_samples\2026-09-29-samplesJuly_D14PTB\D14F_slide3_S5\mp1\data_satcorr'; % path of the data
-%7*9
+path_dflt_uigetdir = 'D:\data'; % TO CHANGE: path of the data
 
 % Selection of the data (dialog box)
 pathname = uigetdir(path_dflt_uigetdir);
